@@ -103,7 +103,7 @@ def locate_section(lines, name, opts=None):
             break
 
     if not end:
-        raise ValueError(f"Cannot find section %{name} {' '.join(args)}")
+        raise ValueError(f"Cannot find section %{name} {' '.join(opts or ())}")
 
     while end > beg and not lines[end-1]:
         end -= 1
@@ -137,6 +137,7 @@ for dirname in opts.dirname:
     sysusers_file = None
     group = None
     user = None
+
     for j,line in enumerate(lines):
         if not (pre.where.start < j <= pre.where.stop):
             continue
@@ -145,9 +146,9 @@ for dirname in opts.dirname:
         if line is None:
             continue
 
-        if m := re.match(r'%{?_sysusersdir}?/.*\.conf', line):
-            sysusers_file = lines[j]
-            print(f'found sysusers {sysusers_file}')
+        if m := re.match(r'%{?sysusers_create_compat}?\s+(.*)$', line):
+            sysusers_file = m.group(1)
+            sysusers_compat_where = where
 
         if m := re.search(r'\b(?:(?:/usr)?/sbin/|%{_sbindir})?(groupadd\b.+)', line):
             dprint(f'matched {line}')
@@ -167,16 +168,15 @@ for dirname in opts.dirname:
         # if sysusers_file and group and user:
         #     break
 
-    if not group and not user:
+    if not (group or user or sysusers_file):
         raise Exception('cannot figure out scriplet')
 
-    if sysusers_file:
-        continue
-
     start = min(group_where.start if group else 1e9,
-                user_where.start if user else 1e9)
+                user_where.start if user else 1e9,
+                sysusers_compat_where.start if sysusers_file else 1e9)
     stop = max(group_where.stop if group else 0,
-               user_where.stop if user else 0)
+               user_where.stop if user else 0,
+               sysusers_compat_where.stop if sysusers_file else 0)
     if lines[stop].strip() == 'exit 0':
         stop += 1
     if start == pre.where.start + 1 and stop == pre.where.stop:
@@ -193,39 +193,41 @@ for dirname in opts.dirname:
         assert user.system or user.uid
         assert user.gid is None or (group and user.gid == group.name)
 
-    # Inject creation of the sysusers file
-    prep = locate_section(lines, 'prep')
+    if not sysusers_file:
+        # Inject creation of the sysusers file
+        prep = locate_section(lines, 'prep')
 
-    if re.match('(?:(?:/usr)?/sbin|%{?_sbindir}?)/nologin$', user.shell):
-        user.shell = None
+        if re.match('(?:(?:/usr)?/sbin|%{?_sbindir}?)/nologin$', user.shell):
+            user.shell = None
 
-    if group and (group.name != user.name or (group.gid and group.gid != user.uid)):
-        group_line = [f"g {group.name} {group.gid or '-'}"]
-    else:
-        group_line = []
+        if group and (group.name != user.name or (group.gid and group.gid != user.uid)):
+            group_line = [f"g {group.name} {group.gid or '-'}"]
+        else:
+            group_line = []
 
-    comment = repr(user.comment) if user.comment else '-'
+        comment = repr(user.comment) if user.comment else '-'
 
-    if user.groups:
-        extra_lines = [f'm {user.name} {g}'
-                       for g in user.groups.split(',')
-                       if g is not user.name]
-    else:
-        extra_lines = []
+        if user.groups:
+            extra_lines = [f'm {user.name} {g}'
+                           for g in user.groups.split(',')
+                           if g is not user.name]
+        else:
+            extra_lines = []
 
-    lines[prep.where.stop:prep.where.stop] = [
-        '',
-        '# Create a sysusers.d config file',
-        f'cat >{name}.sysusers.conf <<EOF',
-        *group_line,
-        f"u {user.name} {user.uid or '-'} {comment} {user.directory} {user.shell or '-'}",
-        *extra_lines,
-        'EOF',
-    ]
+        lines[prep.where.stop:prep.where.stop] = [
+            '',
+            '# Create a sysusers.d config file',
+            f'cat >{name}.sysusers.conf <<EOF',
+            *group_line,
+            f"u {user.name} {user.uid or '-'} {comment} {user.directory} {user.shell or '-'}",
+            *extra_lines,
+            'EOF',
+        ]
 
+    # Remove Requires on shadow-utils
     to_remove = []
     for j,line in enumerate(lines):
-        if m := re.match(f'(Requires(?:\(pre\))?:\s*)(.*(?:(useradd|groupadd|shadow-utils).*))', line):
+        if m := re.match(r'(Requires(?:\(pre\))?:\s*)(.*(?:(useradd|groupadd|shadow-utils).*))', line):
             args = m.group(2).split()
             filtered = [arg for arg in args
                         if not re.match('((?:(?:/usr)?/sbin|%{?_sbindir}?)/(useradd|groupadd)|shadow-utils)$', arg)]
@@ -240,17 +242,18 @@ for dirname in opts.dirname:
         del lines[j]
 
     # Inject installation
-    install = locate_section(lines, 'install')
-    lines[install.where.stop:install.where.stop] = [
-        '',
-        f'install -m0644 -D {name}.sysusers.conf %{{buildroot}}%{{_sysusersdir}}/{name}.conf',
-    ]
+    if not sysusers_file:
+        install = locate_section(lines, 'install')
+        lines[install.where.stop:install.where.stop] = [
+            '',
+            f'install -m0644 -D {name}.sysusers.conf %{{buildroot}}%{{_sysusersdir}}/{name}.conf',
+        ]
 
-    # Inject sysusers file into %files
-    files = locate_section(lines, 'files', pre.args)
-    lines[files.where.stop:files.where.stop] = [
-        f'%{{_sysusersdir}}/{name}.conf',
-    ]
+        # Inject sysusers file into %files
+        files = locate_section(lines, 'files', pre.args)
+        lines[files.where.stop:files.where.stop] = [
+            f'%{{_sysusersdir}}/{name}.conf',
+        ]
 
     # write stuff out and diff
     with open(new, 'wt') as out:

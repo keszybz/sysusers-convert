@@ -1,12 +1,17 @@
 # rpcbind → custom scriptlet
 # wesnoth → existing sysusers file
 # sendmail → complicated
+# pam → false positive
 
-radicale
 cjdns
-util-linux
+colord
 festival
 koji
-colord
 lightdm
+openssh
 openvpn
+pcp       # followup
+
+
+radicale
+util-linux
