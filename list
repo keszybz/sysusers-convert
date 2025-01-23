@@ -1,0 +1,12 @@
+# rpcbind → custom scriptlet
+# wesnoth → existing sysusers file
+# sendmail → complicated
+
+radicale
+cjdns
+util-linux
+festival
+koji
+colord
+lightdm
+openvpn
