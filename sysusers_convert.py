@@ -46,7 +46,7 @@ section_parser.add_argument('name', nargs='?')
 section_parser.add_argument('-f', '--files')
 
 def resolve_macro(specfile, macro):
-    f = tempfile.NamedTemporaryFile(prefix=specfile.stem, suffix='.spec', mode='w+t', delete=False)
+    f = tempfile.NamedTemporaryFile(prefix=specfile.stem, suffix='.spec', mode='w+t')
     f.write(specfile.read_text())
     f.write(f'\nMACRO: {macro}')
     f.flush()
@@ -83,12 +83,12 @@ def parse_cmdline(parser, line):
     opts = parser.parse_args(words[1:j])
     return opts
 
-SECTIONS = 'prep|build|check|package|description|files|pre|post|preun|postun|triggerun|triggerpostun|ldconfig_scriptlets'
+SECTIONS = 'prep|build|check|package|description|files|pre|post|preun|postun|triggerun|triggerpostun|ldconfig_scriptlets|changelog'
 
 @dataclasses.dataclass
 class Section:
     where: slice
-    args: argparse.Namespace
+    opts: argparse.Namespace
 
 def locate_section(lines, name, opts=None):
     beg = end = None
@@ -103,7 +103,7 @@ def locate_section(lines, name, opts=None):
             break
 
     if not end:
-        raise ValueError(f"Cannot find section %{name} {' '.join(opts or ())}")
+        raise ValueError(f"Cannot find section %{name} {opts or ''}")
 
     while end > beg and not lines[end-1]:
         end -= 1
@@ -117,10 +117,10 @@ for dirname in opts.dirname:
     specfile, = dirname.glob('*.spec')
 
     print(f'==== {specfile}')
-    new = pathlib.Path(f'{specfile}.tmp')
+    out_path = pathlib.Path(f'{specfile}.tmp')
     try:
         # remove .tmp file to not leave obsolete stuff in case we bail out
-        os.unlink(new)
+        os.unlink(out_path)
     except FileNotFoundError:
         pass
 
@@ -135,8 +135,10 @@ for dirname in opts.dirname:
 
     # find sysusers file and scriptlet
     sysusers_file = None
-    group = None
-    user = None
+    groups = []
+    users = []
+    groups_where = []
+    users_where = []
 
     for j,line in enumerate(lines):
         if not (pre.where.start < j <= pre.where.stop):
@@ -147,80 +149,94 @@ for dirname in opts.dirname:
             continue
 
         if m := re.match(r'%{?sysusers_create_compat}?\s+(.*)$', line):
+            dprint(f'matched {line}')
+            assert not sysusers_file
             sysusers_file = m.group(1)
             sysusers_compat_where = where
 
         if m := re.search(r'\b(?:(?:/usr)?/sbin/|%{_sbindir})?(groupadd\b.+)', line):
             dprint(f'matched {line}')
-            assert not group
-            group = parse_cmdline(groupadd_parser, m.group(1))
-            dprint(f'found groupadd {group}')
-            group_where = where
+            new = parse_cmdline(groupadd_parser, m.group(1))
+            dprint(f'found groupadd {new}')
+            groups += [new]
+            groups_where += [where]
 
         if m := re.search(r'\b(?:(?:/usr)?/sbin/|%{_sbindir})?(useradd\b.+)', line):
             dprint(f'matched {line}')
-            assert not user
-            user = parse_cmdline(useradd_parser, m.group(1))
-            dprint(f'found useradd {user}')
-            user_where = where
+            new = parse_cmdline(useradd_parser, m.group(1))
+            dprint(f'found useradd {new}')
+            users += [new]
+            users_where += [where]
 
-        # Got everything we care about
-        # if sysusers_file and group and user:
-        #     break
-
-    if not (group or user or sysusers_file):
+    if not (groups or users or sysusers_file):
         raise Exception('cannot figure out scriplet')
 
-    start = min(group_where.start if group else 1e9,
-                user_where.start if user else 1e9,
-                sysusers_compat_where.start if sysusers_file else 1e9)
-    stop = max(group_where.stop if group else 0,
-               user_where.stop if user else 0,
-               sysusers_compat_where.stop if sysusers_file else 0)
-    if lines[stop].strip() == 'exit 0':
+    start = min(*(where.start for where in groups_where),
+                *(where.start for where in users_where),
+                sysusers_compat_where.start if sysusers_file else 1e9,
+                1e9)
+    stop = max(*(where.stop for where in groups_where),
+               *(where.stop for where in users_where),
+               sysusers_compat_where.stop if sysusers_file else 0,
+               0)
+
+    while start > pre.where.start + 1 and re.match(r'^(#.*|)$', lines[start-1]):
+        start -= 1
+    if re.match(r'(?:(?:/usr)?/bin/|%{_bindir})?passwd\s+-l\s+', lines[stop]):
         stop += 1
-    if start == pre.where.start + 1 and stop == pre.where.stop:
+    while re.match(r'^(exit 0|)$', lines[stop]):
+        stop += 1
+    if start == pre.where.start + 1 and stop >= pre.where.stop:
         start -= 1
     elif lines[stop] == '':
         stop += 1
-    if lines[start - 1] == '':
-        start -= 1
     del lines[start:stop]
 
-    if group:
+    for group in groups:
+        if '%' in group.name: # Jesus, have mercy
+            verbatim = resolve_macro(specfile, group.name)
+            group.name = verbatim
+
         assert group.system or group.gid
-    if user:
-        assert user.system or user.uid
-        assert user.gid is None or (group and user.gid == group.name)
+    for user in users:
+        if '%' in user.name: # Jesus, have mercy
+            verbatim = resolve_macro(specfile, user.name)
+            user.name = verbatim
+
+        assert user.system or user.uid, user
+        assert user.gid is None or any(user.gid in (group.name, group.gid) for group in groups), (user, groups)
 
     if not sysusers_file:
         # Inject creation of the sysusers file
         prep = locate_section(lines, 'prep')
 
-        if re.match('(?:(?:/usr)?/sbin|%{?_sbindir}?)/nologin$', user.shell):
-            user.shell = None
+        inject = []
+        for group in groups:
+            if not any(group.name == user.name or (group.gid and group.gid == user.uid)
+                       for user in users):
+                inject += [f"g {group.name} {group.gid or '-'}"]
 
-        if group and (group.name != user.name or (group.gid and group.gid != user.uid)):
-            group_line = [f"g {group.name} {group.gid or '-'}"]
-        else:
-            group_line = []
+        for user in users:
+            if re.match('(?:(?:/usr)?/sbin|%{?_sbindir}?)/nologin$', user.shell):
+                user.shell = None
 
-        comment = repr(user.comment) if user.comment else '-'
+            comment = repr(user.comment) if user.comment else '-'
 
-        if user.groups:
-            extra_lines = [f'm {user.name} {g}'
-                           for g in user.groups.split(',')
-                           if g is not user.name]
-        else:
-            extra_lines = []
+            inject += [
+                f"u {user.name} {user.uid or '-'} {comment} {user.directory} {user.shell or '-'}",
+            ]
+
+            extra_groups = [g for g in user.groups.split(',')
+                            if g != user.name] if user.groups else []
+            if extra_groups:
+                inject += [f'm {user.name} {g}'
+                           for g in extra_groups]
 
         lines[prep.where.stop:prep.where.stop] = [
             '',
             '# Create a sysusers.d config file',
             f'cat >{name}.sysusers.conf <<EOF',
-            *group_line,
-            f"u {user.name} {user.uid or '-'} {comment} {user.directory} {user.shell or '-'}",
-            *extra_lines,
+            *inject,
             'EOF',
         ]
 
@@ -238,6 +254,9 @@ for dirname in opts.dirname:
                     print('Keeping', line)
             else:
                 to_remove += [j]
+        elif re.match(r'%{?\??sysusers_requires_compat}?', line):
+            to_remove += [j]
+
     for j in reversed(to_remove):
         del lines[j]
 
@@ -250,29 +269,35 @@ for dirname in opts.dirname:
         ]
 
         # Inject sysusers file into %files
-        files = locate_section(lines, 'files', pre.args)
+        files = locate_section(lines, 'files', pre.opts)
         lines[files.where.stop:files.where.stop] = [
             f'%{{_sysusersdir}}/{name}.conf',
         ]
 
     # write stuff out and diff
-    with open(new, 'wt') as out:
+    with open(out_path, 'wt') as out:
         print('\n'.join(lines), file=out)
 
     COMMENT = ('Add sysusers.d config file\n'
                '  See https://fedoraproject.org/wiki/Changes/RPMSuportForSystemdSysusers')
 
     if opts.bumpspec:
-        cmd = ['rpmdev-bumpspec', '-c', COMMENT, new]
+        cmd = ['rpmdev-bumpspec', '-c', COMMENT, out_path]
         if opts.user:
             cmd += ['-u', opts.user]
         subprocess.check_call(cmd)
 
     if opts.diff:
-        subprocess.call(['git', 'diff', f'-U{opts.U}', '--no-index', specfile, new])
+        subprocess.call(['git',
+                         # '--no-pager',
+                         'diff',
+                         f'-U{opts.U}',
+                         '--no-index',
+                         specfile,
+                         out_path])
 
     if opts.write:
-        new.rename(specfile)
+        out_path.rename(specfile)
 
     if opts.commit:
         subprocess.check_call(['git',

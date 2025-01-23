@@ -11,7 +11,18 @@ lightdm
 openssh
 openvpn
 pcp       # followup
-
+gdm
+opensmtpd
+ntpsec
+cyrus-sasl
+copr-signer
+condor
+groonga
+buildbot
+flatpak
+httpd
+libvirt
+glusterfs
 
 radicale
 util-linux
