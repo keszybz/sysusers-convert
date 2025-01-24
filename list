@@ -1,28 +1,45 @@
-# rpcbind → custom scriptlet
-# wesnoth → existing sysusers file
-# sendmail → complicated
-# pam → false positive
-
+# acme-tiny
+# dbus-broker FIXME
+# fapolicyd → many sections
+abrt
+bind
+buildbot
+chromium
+# cifs-utils → false positive
 cjdns
 colord
+condor
+copr-signer
+cyrus-sasl
+dbus
+elasticsearch
+exim
 festival
+flatpak
+gdm
+glusterfs
+groonga
+httpd
 koji
+libutempter
+libvirt
 lightdm
+# nfs-utils → custom scriptlet
+ntpsec
+opensmtpd
 openssh
 openvpn
+# pam → false positive
 pcp       # followup
-gdm
-opensmtpd
-ntpsec
-cyrus-sasl
-copr-signer
-condor
-groonga
-buildbot
-flatpak
-httpd
-libvirt
-glusterfs
-
+ppp
 radicale
+# rpcbind → custom scriptlet
+# s390utils → existing sysusers file
+sendmail
+# shadow-utils → false positive
+thermald
 util-linux
+# vbox → foreign spec?
+# wesnoth → existing sysusers file
+
+
