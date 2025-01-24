@@ -146,7 +146,7 @@ for dirname in opts.dirname:
     except FileNotFoundError:
         pass
 
-    name = dirname.name
+    name = dirname.absolute().name
     if name != specfile.stem:
         print('BAD SPEC FILE NAME')
 
@@ -290,7 +290,7 @@ for dirname in opts.dirname:
                 preject += ['# Option -k was ignored. It must not be used for system users.']
 
             inject += [
-                f"u {user.name_resolved} {user.uid or '-'} {comment} {user.home_dir} {user.shell or '-'}",
+                f"u {user.name_resolved} {user.uid or '-'} {comment} {user.home_dir or '-'} {user.shell or '-'}",
             ]
 
             if user.gid and not any({user.gid, user.gid_resolved} & {group.name_resolved, group.gid}
