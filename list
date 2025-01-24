@@ -182,7 +182,7 @@ proxysql
 # pulseaudio
 # puppet
 pypolicyd-spf
-# python-bucky → ineffective script
+python-bucky
 python-carbon
 # python-onionbalance → undeclared group
 qatlib
@@ -254,7 +254,7 @@ vnstat
 voms
 vsomeip3
 webalizer
-# wesnoth → existing sysusers file
+# wesnoth
 wsdd
 x2godesktopsharing
 x2goserver

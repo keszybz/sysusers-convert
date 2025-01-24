@@ -293,8 +293,11 @@ for dirname in opts.dirname:
                 f"u {user.name_resolved} {user.uid or '-'} {comment} {user.home_dir or '-'} {user.shell or '-'}",
             ]
 
-            if user.gid and not any({user.gid, user.gid_resolved} & {group.name_resolved, group.gid}
-                                    for group in groups):
+            if (user.gid and
+                not any({user.gid, user.gid_resolved} & {group.name_resolved, group.gid}
+                        for group in groups) and
+                not opts.permissive):
+
                 print('user:', user)
                 print('groups:', groups)
                 raise ValueError('systemd-sysusuers cannot handle this case')
