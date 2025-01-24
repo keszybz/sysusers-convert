@@ -1,45 +1,268 @@
-# acme-tiny
-# dbus-broker FIXME
-# fapolicyd → many sections
-abrt
-bind
+# abrt
+# acme-tiny → done
+addrwatch
+akmods
+# amanda → undeclared group
+anyterm
+apt
+asterisk
+autossh
+# avahi
+BackupPC
+bacula
+barman
+beanstalkd
+beep
+# bind9-next
+# bind
+bitcoin-core
+boinc-client
+# bsd-games
 buildbot
+# bzflag
+calypso
+ccache
+# ceph
 chromium
-# cifs-utils → false positive
+c-icap
 cjdns
-colord
+# clamav
+# clamsmtp → undeclared group
+cleanfeed
+cntlm
 condor
-copr-signer
-cyrus-sasl
-dbus
-elasticsearch
+copr-backend
+copr-dist-git
+copr-frontend
+copr-keygen
+corosync-qdevice
+crack
+crossfire
+cyrus-imapd
+dahdi-tools
+darkstat
+davfs2
+# dbus-broker FIXME
+ddclient
+deluge
+dhcp-forwarder
+dictd
+dionaea
+# direwolf → undeclared group
+dist-git
+dlt-daemon
+dmapd
+dnsdist
+# dogtag-pki
+domoticz
+ebnetd
+elfutils
+erlang
+etcd
 exim
+# fapolicyd → many sections
 festival
-flatpak
-gdm
+firebird
+flow-tools
+# freeipa → many sections
+# frozen-bubble → many sections
+galera
+ganglia
+getdns
+gitit
+gitolite3
+gkrellm
 glusterfs
-groonga
-httpd
+gmediarender
+# gnokii
+gns3-server
+golang-github-shopify-toxiproxy
+gr-funcube
+# groonga
+icecast
+icecream
+iguanaIR
+inadyn-mt
+inn
+ipa-hcc
+ip-sentinel
+ipsilon
+jabberd
+jack-audio-connection-kit
+# jetty
+jwhois
+kismet
+knot-resolver
+# knot
+KoboDeluxe
 koji
-libutempter
-libvirt
-lightdm
+libnxz
+libservicelog
+libvirt-dbus
+# libvirt → many sections
+lighttpd
+liquidwar
+lirc
+lizardfs
+lockdev
+# logcheck → && chown
+lpf
+lttng-tools
+macromilter
+maradns
+mariadb10.11
+mgetty
+milter-greylist
+milter-regex
+minetest
+mirrormanager2
+# mISDN → many sections
+mlmmj
+mock
+monotone
+mopidy
+mpdscribble
+munin
+mysql8.0
+# nagios → many sections
+nats-server
+netdata
+NetworkManager-fortisslvpn
+NetworkManager-openconnect
+NetworkManager-openvpn
+newscache
+# nfs-ganesha → custom scriptlet
 # nfs-utils → custom scriptlet
+nginx
+ngircd
+noip
+nqc
+nrpe
+nsd
+nss-pam-ldapd
+ntp-refclock
 ntpsec
+nut
+obs-signd
+ocserv
+ocspd
+odcs
+oidentd
+omniORB
+# openarc
+# opencryptoki → many sections
+opendkim
+opendmarc
+opendnssec
+openelp
+openni-primesense
 opensmtpd
-openssh
 openvpn
-# pam → false positive
-pcp       # followup
+owfs
+parsec
+pbuilder
+# pcp
+pcsc-cyberjack
+pdns-recursor
+pdns
+# perl-DBD-MySQL → just a test user
+perl-MogileFS-Server
+perl-Net-Statsd-Server
+perl-Web-Paste-Simple
+pesign
+pgbouncer
+picocom
+postfix-mta-sts-resolver
+postgresql16
+postgresql17
+postgrey
 ppp
+privoxy
+proxysql
+# pulseaudio
+# puppet
+pypolicyd-spf
+# python-bucky → ineffective script
+python-carbon
+# python-onionbalance → undeclared group
+qatlib
+# qemu → many sections
+rabbitmq-server
 radicale
+rancid
+rbldnsd
+# realtime-setup → many sections
+# resalloc → custom scriptlet
+retrace-server
 # rpcbind → custom scriptlet
+rssh
+rtl-sdr
+rwhoisd
 # s390utils → existing sysusers file
+safekeep
+sagator
+# sblim-sfcb
+screen
 sendmail
-# shadow-utils → false positive
+# shadow-utils
+shairport-sync
+shellinabox
+sigul
+slrn
+# smbldap-tools → false positive
+# smokeping → undeclared group
+softhsm
+spamass-milter
+spampd
+sphinx
+sqlgrey
+squeezelite
+squid
+sslh
+# sssd → existing sysusers file
+sstp-client
+statsd
+suricata
+svxlink
+sympa
+# sysrepo → existing sysusers file
+# systemtap → undeclared group
+tarantool
+taskd
+tcpcrypt
+# teeworlds
+tetrinetx
 thermald
+thttpd
+tntnet
+# tomcat
+totpcgi
+transmission
+# trousers
+# tuptime
+ufdbGuard
+uhd
+up-imapproxy
+usbauth-notifier
+usbmuxd
 util-linux
-# vbox → foreign spec?
+# uucp
+uwsgi
+vfrnav
+# virtualbox-guest-additions → undeclared group
+vnstat
+voms
+vsomeip3
+webalizer
 # wesnoth → existing sysusers file
-
-
+wsdd
+x2godesktopsharing
+x2goserver
+# xguest → many sections
+xpilot-ng
+xpra
+xrootd
+xtide
+yubihsm-connector
+# zabbix → many sections
+znc
