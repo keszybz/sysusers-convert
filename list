@@ -32,7 +32,7 @@ cleanfeed
 cntlm
 condor
 copr-backend
-copr-dist-git
+# copr-dist-git
 copr-frontend
 copr-keygen
 corosync-qdevice
@@ -236,7 +236,7 @@ thermald
 thttpd
 tntnet
 # tomcat
-totpcgi
+# totpcgi
 transmission
 # trousers
 # tuptime → done
@@ -266,3 +266,113 @@ xtide
 yubihsm-connector
 # zabbix → many sections
 znc
+
+tpm2-tss
+# 389-ds-base
+amavis
+anope
+arpwatch
+bitlbee
+bodhi-server
+brltty
+caddy
+chrony
+# clevis
+colord
+cosmic-greeter
+coturn
+cyrus-sasl
+deepin-api
+dhcpcd
+# dnsconfd
+dnsmasq
+dovecot
+# ec2-instance-connect
+fastnetmon
+flatpak
+freeradius
+frr
+gdm
+geoclue2
+gerbera
+golang-github-prometheus
+golang-github-prometheus-alertmanager
+golang-github-theoapp-theo-agent
+grafana
+greetd
+gsi-openssh
+guacamole-server
+haproxy
+kea
+keydb
+keylime
+# kubernetes1.29 → false positive
+# kubernetes1.30 → false positive
+# kubernetes1.31 → false positive
+# kubernetes1.32 → false positive
+lcdproc
+libgpiod
+lightdm
+lldpd
+magicmirror
+mailman3
+matrix-synapse
+matterbridge
+memcached
+mimedefang
+minidlna
+moby-engine
+mod_mapcache
+mumble
+munge
+myproxy
+node-exporter
+openbgpd
+openiked
+openldap
+openqa
+opensips
+openssh
+openvswitch
+# pacemaker
+perfetto
+pipewire
+plocate
+polkit
+postfwd
+prosody
+python-virtualbmc
+quassel
+radsecproxy
+radvd
+ravada
+redict
+redsocks
+rpki-client
+rtkit
+rtpproxy
+rust-crypto-auditing-agent
+salt
+samba
+sane-backends
+sanlock
+sddm
+seatd
+ser2net
+setroubleshoot
+sip-redirect
+smf-spf
+tang
+tcpdump
+tlog
+# tog-pegasus
+trafficserver
+unbound
+unrealircd
+valkey
+vaultwarden
+wfview
+wireshark
+xrdp
+yggdrasil
+zeek
