@@ -260,15 +260,15 @@ for dirname in opts.dirname:
         user.name_resolved = resolve_macro(specfile, user.name)
         user.gid_resolved = resolve_macro(specfile, user.gid)
 
+    grumble = []
     if not sysusers_file:
         # Inject creation of the sysusers file
         prep = locate_section(specfile, lines, 'prep')
 
-        preject = []
         inject = []
         for group in groups:
             if not group.system and not group.gid:
-                preject += ['# Previously, a non-system group was created :(, sysusers does not support this']
+                grumble += ['Previously, a non-system group was created :(, sysusers does not support this.']
 
             if not any((group.name == user.name and group.gid == user.uid) or
                        (group.gid and group.gid == user.uid)
@@ -280,14 +280,14 @@ for dirname in opts.dirname:
                 user.shell = None
 
             if not user.system and not user.uid:
-                preject += ['# Previously, a non-system user was created :(, sysusers does not support this']
+                grumble += ['Previously, a non-system user was created :(, sysusers does not support this.']
 
             comment = repr(user.comment) if user.comment else '-'
 
             if user.create_home:
-                preject += ['# Option -m was ignored. It must not be used for system users.']
+                grumble += ['Option -m was ignored. It must not be used for system users.']
             if user.skel:
-                preject += ['# Option -k was ignored. It must not be used for system users.']
+                grumble += ['Option -k was ignored. It must not be used for system users.']
 
             inject += [
                 f"u {user.name_resolved} {user.uid or '-'} {comment} {user.home_dir or '-'} {user.shell or '-'}",
@@ -310,7 +310,6 @@ for dirname in opts.dirname:
 
         lines[prep.where.stop:prep.where.stop] = [
             '',
-            *sorted(set(preject)),
             '# Create a sysusers.d config file',
             f'cat >{name.lower()}.sysusers.conf <<EOF',
             *inject,
@@ -355,10 +354,21 @@ for dirname in opts.dirname:
     with open(out_path, 'wt') as out:
         print('\n'.join(lines), file=out)
 
-    CHLOG = 'Add sysusers.d config file to allow rpm to create users/groups automatically'
-    COMMENT = '\n'.join((CHLOG,
-                         ''
-                         'See https://fedoraproject.org/wiki/Changes/RPMSuportForSystemdSysusers.'))
+    grumble = sorted(set(grumble))
+
+    if groups or users:
+        CHLOG = 'Add sysusers.d config file to allow rpm to create users/groups automatically'
+        COMMENT = '\n'.join((CHLOG,
+                             '',
+                             'See https://fedoraproject.org/wiki/Changes/RPMSuportForSystemdSysusers.',
+                             *grumble))
+    else:
+        CHLOG = 'Drop call to %sysusers_create_compat'
+        COMMENT = '\n'.join((CHLOG,
+                             '',
+                             'After https://fedoraproject.org/wiki/Changes/RPMSuportForSystemdSysusers,',
+                             'rpm will handle account creation automatically.',
+                             *grumble))
 
     if opts.bumpspec:
         cmd = ['rpmdev-bumpspec', '-c', CHLOG, out_path]
@@ -367,21 +377,26 @@ for dirname in opts.dirname:
         subprocess.check_call(cmd)
 
     if opts.diff:
-        subprocess.call(['git',
-                         '--no-pager',
-                         '-c', 'color.diff=always',
-                         'diff',
-                         f'-U{opts.U}',
-                         '--no-index',
-                         specfile,
-                         out_path])
+        subprocess.call([
+            'git',
+            '--no-pager',
+            '-c', 'color.diff=always',
+            'diff',
+            f'-U{opts.U}',
+            '--no-index',
+            specfile,
+            out_path,
+        ])
 
     if opts.write:
         out_path.rename(specfile)
 
     if opts.commit:
-        subprocess.check_call(['git',
-                               f'--git-dir={dirname}/.git',
-                               f'--work-tree={dirname}/',
-                               'commit', '-a',
-                               '-m', COMMENT.split('\n')[0]])
+        subprocess.check_call([
+            'git',
+            f'--git-dir={dirname}/.git',
+            f'--work-tree={dirname}/',
+            'commit',
+            '-a',
+            '-m', COMMENT,
+        ])
