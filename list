@@ -99,7 +99,7 @@ koji
 libnxz
 libservicelog
 libvirt-dbus
-# libvirt
+# libvirt → exclusion requested
 lighttpd
 liquidwar
 lirc
