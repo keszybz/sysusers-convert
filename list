@@ -60,7 +60,7 @@ elfutils
 erlang
 etcd
 exim
-# fapolicyd → many sections
+fapolicyd
 festival
 firebird
 flow-tools
@@ -99,7 +99,7 @@ koji
 libnxz
 libservicelog
 libvirt-dbus
-# libvirt → many sections
+# libvirt
 lighttpd
 liquidwar
 lirc

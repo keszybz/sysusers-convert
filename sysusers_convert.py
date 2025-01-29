@@ -111,9 +111,12 @@ class Section:
     where: slice
     opts: argparse.Namespace
 
-def locate_section(specfile, lines, name, opts=None):
+def locate_section(specfile, lines, name, opts=None, after=None):
     beg = end = None
     for j,line in enumerate(lines):
+        if after and j <= after.where.stop:
+            continue
+
         if beg is None and (m := re.match(fr'^%{name}(?:$|\s+)(.*)', line)):
             resolved = resolve_macro(specfile, m.group(1))
             ours = section_parser.parse_args(resolved.split())
@@ -153,105 +156,106 @@ for dirname in opts.dirname:
     lines = open(specfile, 'rt').readlines()
     lines = [line.rstrip('\n') for line in lines]
 
-    try:
-        pre = locate_section(specfile, lines, 'pre')
-    except ValueError:
-        pre = None
-
     # find sysusers file and scriptlet
     sysusers_file = None
     groups = []
     users = []
     groups_where = []
     users_where = []
+    pre = None
 
-    for j,line in enumerate(lines):
-        if not pre:
+    while True:
+        pre = locate_section(specfile, lines, 'pre', after=pre)
+
+        for j,line in enumerate(lines):
+            if not pre:
+                break
+            if not (pre.where.start < j <= pre.where.stop):
+                continue
+
+            line, where = logical_line(lines, j)
+            if line is None:
+                continue
+
+            if m := re.match(r'%{?sysusers_create_compat}?\s+(.*)$', line):
+                dprint(f'matched {line}')
+                assert not sysusers_file
+                sysusers_file = m.group(1)
+                sysusers_compat_where = where
+
+            if m := re.search(r'\b(?:(?:/usr)?/sbin/|%{_sbindir})?(groupadd\b.+)', line):
+                dprint(f'matched {line}')
+                new = parse_cmdline(groupadd_parser, m.group(1))
+                dprint(f'found groupadd {new}')
+                groups += [new]
+                groups_where += [where]
+
+            if m := re.search(r'\b(?:(?:/usr)?/sbin/|%{_sbindir})?(useradd\b.+)', line):
+                dprint(f'matched {line}')
+                new = parse_cmdline(useradd_parser, m.group(1))
+                dprint(f'found useradd {new}')
+                users += [new]
+                users_where += [where]
+
+            if m := re.search(r'\b(?:(?:/usr)?/sbin/|%{_sbindir})?(gpasswd\b.+)', line):
+                dprint(f'matched {line}')
+                new = parse_cmdline(gpasswd_parser, m.group(1))
+                dprint(f'found gpasswd {new}')
+                for user in users:
+                    if new.add == user.name:
+                        assert not user.groups
+                        user.groups = new.group
+                        break
+                else:
+                    assert opts.permissive
+
+            if m := re.search(r'\b(?:(?:/usr)?/sbin/|%{_sbindir})?(usermod\b.+)', line):
+                dprint(f'matched {line}')
+                new = parse_cmdline(usermod_parser, m.group(1))
+                dprint(f'found usermod {new}')
+                if new.login:
+                    assert opts.permissive  # This is a rename, needs custom handling
+
+                for user in users:
+                    if new.name == user.name:
+                        if new.group:
+                            user.groups = f'{user.groups},{new.group}' if user.groups else new.group
+                        if new.gid:
+                            assert user.gid is None
+                            user.gid = new.gid
+                        if new.home and new.home != user.home_dir:
+                            assert user.home_dir is None
+                            user.home_dir = new.home
+                        break
+                else:
+                    assert opts.permissive
+
+        if groups or users or sysusers_file:
             break
-        if not (pre.where.start < j <= pre.where.stop):
-            continue
-
-        line, where = logical_line(lines, j)
-        if line is None:
-            continue
-
-        if m := re.match(r'%{?sysusers_create_compat}?\s+(.*)$', line):
-            dprint(f'matched {line}')
-            assert not sysusers_file
-            sysusers_file = m.group(1)
-            sysusers_compat_where = where
-
-        if m := re.search(r'\b(?:(?:/usr)?/sbin/|%{_sbindir})?(groupadd\b.+)', line):
-            dprint(f'matched {line}')
-            new = parse_cmdline(groupadd_parser, m.group(1))
-            dprint(f'found groupadd {new}')
-            groups += [new]
-            groups_where += [where]
-
-        if m := re.search(r'\b(?:(?:/usr)?/sbin/|%{_sbindir})?(useradd\b.+)', line):
-            dprint(f'matched {line}')
-            new = parse_cmdline(useradd_parser, m.group(1))
-            dprint(f'found useradd {new}')
-            users += [new]
-            users_where += [where]
-
-        if m := re.search(r'\b(?:(?:/usr)?/sbin/|%{_sbindir})?(gpasswd\b.+)', line):
-            dprint(f'matched {line}')
-            new = parse_cmdline(gpasswd_parser, m.group(1))
-            dprint(f'found gpasswd {new}')
-            for user in users:
-                if new.add == user.name:
-                    assert not user.groups
-                    user.groups = new.group
-                    break
-            else:
-                assert opts.permissive
-
-        if m := re.search(r'\b(?:(?:/usr)?/sbin/|%{_sbindir})?(usermod\b.+)', line):
-            dprint(f'matched {line}')
-            new = parse_cmdline(usermod_parser, m.group(1))
-            dprint(f'found usermod {new}')
-            if new.login:
-                assert opts.permissive  # This is a rename, needs custom handling
-
-            for user in users:
-                if new.name == user.name:
-                    if new.group:
-                        user.groups = f'{user.groups},{new.group}' if user.groups else new.group
-                    if new.gid:
-                        assert user.gid is None
-                        user.gid = new.gid
-                    if new.home and new.home != user.home_dir:
-                        assert user.home_dir is None
-                        user.home_dir = new.home
-                    break
-            else:
-                assert opts.permissive
-
-    if not (groups or users or sysusers_file):
+        print('Nothing relevant found in %pre section:', pre)
+    else:
         raise Exception(f'{specfile}: cannot figure out scriplet')
 
-    if pre:
-        start = min(*(where.start for where in groups_where),
-                    *(where.start for where in users_where),
-                    sysusers_compat_where.start if sysusers_file else 1e9,
-                    1e9)
-        stop = max(*(where.stop for where in groups_where),
-                   *(where.stop for where in users_where),
-                   sysusers_compat_where.stop if sysusers_file else 0,
-                   0)
+    start = min(*(where.start for where in groups_where),
+                *(where.start for where in users_where),
+                sysusers_compat_where.start if sysusers_file else 1e9,
+                1e9)
+    stop = max(*(where.stop for where in groups_where),
+               *(where.stop for where in users_where),
+               sysusers_compat_where.stop if sysusers_file else 0,
+               0)
 
-        while start > pre.where.start + 1 and re.match(r'^(#.*|)$', lines[start-1]):
-            start -= 1
-        while re.match(r'(?:(?:/usr)?/s?bin/|%{_s?bindir})?(passwd\s+-l|usermod|groupmod|gpasswd)\b', lines[stop]):
-            stop += 1
-        if re.match(r'^(exit 0|:)$', lines[stop].strip()):
-            stop += 1
-        if start == pre.where.start + 1 and stop >= pre.where.stop:
-            start -= 1
-        elif lines[stop] == '':
-            stop += 1
-        del lines[start:stop]
+    while start > pre.where.start + 1 and re.match(r'^(#.*|)$', lines[start-1]):
+        start -= 1
+    while re.match(r'(?:(?:/usr)?/s?bin/|%{_s?bindir})?(passwd\s+-l|usermod|groupmod|gpasswd)\b', lines[stop]):
+        stop += 1
+    if re.match(r'^(exit 0|:)$', lines[stop].strip()):
+        stop += 1
+    if start == pre.where.start + 1 and stop >= pre.where.stop:
+        start -= 1
+    elif lines[stop] == '':
+        stop += 1
+    del lines[start:stop]
 
     for group in groups:
         group.name_resolved = resolve_macro(specfile, group.name)
