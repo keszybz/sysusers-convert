@@ -289,18 +289,21 @@ for dirname in opts.dirname:
             if user.skel:
                 grumble += ['Option -k was ignored. It must not be used for system users.']
 
-            inject += [
-                f"u {user.name_resolved} {user.uid or '-'} {comment} {user.home_dir or '-'} {user.shell or '-'}",
-            ]
+            uiditem = user.uid or '-'
 
             if (user.gid and
+                user.gid_resolved != user.name_resolved and
                 not any({user.gid, user.gid_resolved} & {group.name_resolved, group.gid}
-                        for group in groups) and
-                not opts.permissive):
+                        for group in groups)):
 
-                print('user:', user)
-                print('groups:', groups)
-                raise ValueError('systemd-sysusuers cannot handle this case')
+                dprint('user:', user)
+                dprint('groups:', groups)
+
+                uiditem += f':{user.gid}'
+
+            inject += [
+                f"u {user.name_resolved} {uiditem} {comment} {user.home_dir or '-'} {user.shell or '-'}",
+            ]
 
             extra_groups = [g for g in user.groups.split(',')
                             if g != user.name] if user.groups else []

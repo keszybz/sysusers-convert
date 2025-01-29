@@ -2,7 +2,7 @@
 # acme-tiny → done
 addrwatch
 akmods
-# amanda → undeclared group
+amanda
 anyterm
 apt
 asterisk
@@ -27,7 +27,7 @@ chromium
 c-icap
 cjdns
 # clamav
-# clamsmtp → undeclared group
+clamsmtp
 cleanfeed
 cntlm
 condor
@@ -48,7 +48,7 @@ deluge
 dhcp-forwarder
 dictd
 dionaea
-# direwolf → undeclared group
+direwolf
 dist-git
 dlt-daemon
 dmapd
@@ -184,7 +184,7 @@ proxysql
 pypolicyd-spf
 python-bucky
 python-carbon
-# python-onionbalance → undeclared group
+python-onionbalance
 qatlib
 # qemu → many sections
 rabbitmq-server
@@ -210,7 +210,7 @@ shellinabox
 sigul
 slrn
 # smbldap-tools → false positive
-# smokeping → undeclared group
+smokeping
 softhsm
 spamass-milter
 spampd
@@ -226,7 +226,7 @@ suricata
 svxlink
 sympa
 # sysrepo → existing sysusers file
-# systemtap → undeclared group
+systemtap
 tarantool
 taskd
 tcpcrypt
@@ -249,7 +249,7 @@ util-linux
 # uucp
 uwsgi
 vfrnav
-# virtualbox-guest-additions → undeclared group
+# virtualbox-guest-additions
 vnstat
 voms
 vsomeip3
