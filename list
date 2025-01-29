@@ -42,7 +42,7 @@ cyrus-imapd
 dahdi-tools
 darkstat
 davfs2
-# dbus-broker FIXME
+# dbus-broker
 ddclient
 deluge
 dhcp-forwarder
@@ -131,8 +131,8 @@ NetworkManager-fortisslvpn
 NetworkManager-openconnect
 NetworkManager-openvpn
 newscache
-# nfs-ganesha → custom scriptlet
-# nfs-utils → custom scriptlet
+nfs-ganesha
+# nfs-utils
 nginx
 ngircd
 noip
@@ -192,9 +192,9 @@ radicale
 rancid
 rbldnsd
 realtime-setup
-# resalloc → custom scriptlet
+# resalloc
 retrace-server
-# rpcbind → custom scriptlet
+# rpcbind
 rssh
 rtl-sdr
 rwhoisd
@@ -258,7 +258,7 @@ webalizer
 wsdd
 x2godesktopsharing
 x2goserver
-# xguest → many sections
+# xguest → just say no!
 xpilot-ng
 xpra
 xrootd

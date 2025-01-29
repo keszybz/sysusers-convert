@@ -43,6 +43,7 @@ useradd_parser.add_argument('-l', '--no-log-init', action='store_true') # Ignore
 useradd_parser.add_argument('-o', '--non-unique', action='store_true') # Ignored!
 useradd_parser.add_argument('-N', '--no-user-group', action='store_true')  # I think if we specify gid, this happens implicitly
 useradd_parser.add_argument('-m', '--create-home', action='store_true')
+useradd_parser.add_argument('-Z', '--selinux-user')  # Sysusers ain't gonna support that
 useradd_parser.add_argument('name')
 
 gpasswd_parser = argparse.ArgumentParser('gpasswd')
@@ -293,6 +294,9 @@ for dirname in opts.dirname:
 
             if not user.system and not user.uid:
                 grumble += ['Previously, a non-system user was created :(, sysusers does not support this.']
+
+            if user.selinux_user and not opts.permissive:
+                raise ValueError(f'selinux user handling required: {user}')
 
             comment = repr(user.comment) if user.comment else '-'
 
