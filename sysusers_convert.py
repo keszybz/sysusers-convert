@@ -163,9 +163,17 @@ for dirname in opts.dirname:
     groups_where = []
     users_where = []
     pre = None
+    section_name = 'pre'
 
     while True:
-        pre = locate_section(specfile, lines, 'pre', after=pre)
+        try:
+            pre = locate_section(specfile, lines, section_name, after=pre)
+        except ValueError:
+            if section_name == 'pre':
+                section_name = 'post'
+                after = None
+                continue
+            exit(f'Cannot find section %{section_name}')
 
         for j,line in enumerate(lines):
             if not pre:
@@ -232,7 +240,7 @@ for dirname in opts.dirname:
 
         if groups or users or sysusers_file:
             break
-        print('Nothing relevant found in %pre section:', pre)
+        dprint('Nothing relevant found in %pre section:', pre)
     else:
         raise Exception(f'{specfile}: cannot figure out scriplet')
 
@@ -295,18 +303,17 @@ for dirname in opts.dirname:
 
             uiditem = user.uid or '-'
 
+            dprint('user:', user)
+            dprint('groups:', groups)
+
             if (user.gid and
-                user.gid_resolved != user.name_resolved and
-                not any({user.gid, user.gid_resolved} & {group.name_resolved, group.gid}
-                        for group in groups)):
-
-                dprint('user:', user)
-                dprint('groups:', groups)
-
+                user.gid_resolved != user.name_resolved):
                 uiditem += f':{user.gid}'
 
+            home_dir = user.home_dir if user.home_dir and user.home_dir != '/' else '-'
+
             inject += [
-                f"u {user.name_resolved} {uiditem} {comment} {user.home_dir or '-'} {user.shell or '-'}",
+                f"u {user.name_resolved} {uiditem} {comment} {home_dir} {user.shell or '-'}",
             ]
 
             extra_groups = [g for g in user.groups.split(',')

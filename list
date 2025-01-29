@@ -64,8 +64,8 @@ fapolicyd
 festival
 firebird
 flow-tools
-# freeipa → many sections
-# frozen-bubble → many sections
+# freeipa
+frozen-bubble
 galera
 ganglia
 getdns
@@ -116,7 +116,7 @@ milter-greylist
 milter-regex
 minetest
 mirrormanager2
-# mISDN → many sections
+mISDN
 mlmmj
 mock
 monotone
@@ -124,7 +124,7 @@ mopidy
 mpdscribble
 munin
 mysql8.0
-# nagios → many sections
+nagios
 nats-server
 netdata
 NetworkManager-fortisslvpn
@@ -150,7 +150,7 @@ odcs
 oidentd
 omniORB
 # openarc
-# opencryptoki → many sections
+opencryptoki
 opendkim
 opendmarc
 opendnssec
@@ -186,12 +186,12 @@ python-bucky
 python-carbon
 python-onionbalance
 qatlib
-# qemu → many sections
+qemu
 rabbitmq-server
 radicale
 rancid
 rbldnsd
-# realtime-setup → many sections
+realtime-setup
 # resalloc → custom scriptlet
 retrace-server
 # rpcbind → custom scriptlet
@@ -264,7 +264,7 @@ xpra
 xrootd
 xtide
 yubihsm-connector
-# zabbix → many sections
+zabbix
 znc
 
 tpm2-tss
