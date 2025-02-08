@@ -14,7 +14,7 @@ barman
 beanstalkd
 beep
 # bind9-next
-# bind
+# bind → done
 bitcoin-core
 boinc-client
 # bsd-games
@@ -27,7 +27,7 @@ chromium
 c-icap
 cjdns
 # clamav
-clamsmtp
+# clamsmtp → retired
 cleanfeed
 cntlm
 condor
@@ -73,7 +73,7 @@ gitit
 gitolite3
 gkrellm
 glusterfs
-gmediarender
+# gmediarender → retired
 # gnokii
 gns3-server
 golang-github-shopify-toxiproxy
@@ -153,7 +153,7 @@ omniORB
 opencryptoki
 opendkim
 opendmarc
-opendnssec
+# opendnssec → done
 openelp
 openni-primesense
 opensmtpd
@@ -211,7 +211,7 @@ sigul
 slrn
 # smbldap-tools → false positive
 smokeping
-softhsm
+# softhsm → done
 spamass-milter
 spampd
 sphinx
