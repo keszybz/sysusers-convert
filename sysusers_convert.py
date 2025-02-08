@@ -13,6 +13,7 @@ import tempfile
 parser = argparse.ArgumentParser()
 parser.add_argument('--diff', action='store_true')
 parser.add_argument('-d', '--debug', action='store_true')
+parser.add_argument('-C', '--color', action='store_true')
 parser.add_argument('-U', type=int, default=3)
 parser.add_argument('-p', '--permissive', action='store_true')
 parser.add_argument('-b', '--bumpspec', action='store_true')
@@ -398,7 +399,7 @@ for dirname in opts.dirname:
         subprocess.call([
             'git',
             '--no-pager',
-            '-c', 'color.diff=always',
+            *(['-c', 'color.diff=always'] if opts.color else []),
             'diff',
             f'-U{opts.U}',
             '--no-index',
