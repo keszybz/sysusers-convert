@@ -72,7 +72,15 @@ def resolve_macro(specfile, macro):
     f.write(specfile.read_text())
     f.write(f'\nMACRO: {macro}')
     f.flush()
-    out = subprocess.check_output(['rpmspec', '-P', f.name], universal_newlines=True)
+    out = subprocess.check_output(
+        [
+            'rpmspec',
+            '--define', '_sourcedir .',
+            '--define', '_builddir .',
+            '-P', f.name,
+        ],
+        universal_newlines=True,
+    )
     blah = out.splitlines()[-1]
     assert blah.startswith('MACRO: ')
     return blah[7:]
@@ -141,7 +149,11 @@ for dirname in opts.dirname:
     if dirname.name.endswith('.spec'):
         dirname = dirname.parent
 
-    specfile, = dirname.glob('*.spec')
+    try:
+        specfile, = dirname.glob('*.spec')
+    except ValueError:
+        exit(f'{dirname}: cannot find *.spec')
+
 
     dprint(f'==== {specfile}')
     out_path = pathlib.Path(f'{specfile}.tmp')
@@ -175,7 +187,7 @@ for dirname in opts.dirname:
                 section_name = 'post'
                 after = None
                 continue
-            exit(f'Cannot find section %{section_name}')
+            exit(f'{specfile}: cannot find section %{section_name}')
 
         for j,line in enumerate(lines):
             if not pre:
